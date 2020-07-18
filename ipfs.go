@@ -26,6 +26,8 @@ import (
 	"github.com/ipfs/go-ipfs/plugin/loader"
 	"github.com/ipfs/go-ipfs/repo/fsrepo"
 	"github.com/libp2p/go-libp2p-core/peer"
+
+	"github.com/wabarc/ipfs-pinner/pkg/infura"
 )
 
 func setupPlugins(externalPluginsPath string) error {
@@ -278,4 +280,13 @@ func (dm *Daemon) Transfer(source string) (string, error) {
 	}
 
 	return cid, nil
+}
+
+func Pinner(source string) (string, error) {
+	if cid, err := infura.PinFile(source); err != nil {
+		return "", err
+	} else {
+		return cid, nil
+	}
+
 }

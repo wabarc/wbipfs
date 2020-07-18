@@ -79,3 +79,27 @@ func TestTransfer(t *testing.T) {
 
 	t.Log(cid)
 }
+
+func TestPinner(t *testing.T) {
+	content := []byte("Hello, IPFS!")
+	tmpfile, err := ioutil.TempFile("", "wbipfs-testing")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	if _, err := tmpfile.Write(content); err != nil {
+		t.Fatal(err)
+	}
+
+	cid, err := Pinner(tmpfile.Name())
+	if err != nil {
+		t.Error(err)
+	}
+
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(cid)
+}

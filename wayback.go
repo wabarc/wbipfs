@@ -89,7 +89,8 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 				return
 			}
 
-			if wbrc.IPFSMode == "daemon" {
+			switch wbrc.IPFSMode {
+			case "daemon":
 				cid, err := worker.Transfer(filepath)
 				if err != nil {
 					log.Printf("Transfer failed, path: %s, err: %s", filepath, err)
@@ -98,7 +99,16 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 				}
 				dest := "https://ipfs.io/ipfs/" + cid
 				worklist[link] = dest
-			} else {
+			case "pinner":
+				if cid, err := Pinner(filepath); err != nil {
+					log.Printf("Transfer failed, path: %s, err: %s", filepath, err)
+					worklist[link] = "Archive failed."
+					return
+				} else {
+					dest := "https://ipfs.io/ipfs/" + cid
+					worklist[link] = dest
+				}
+			default:
 				cid, err := Publish(filepath)
 				if err != nil {
 					log.Printf("Publish failed, path: %s, err: %s", filepath, err)
