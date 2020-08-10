@@ -1015,8 +1015,8 @@ github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGr
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/viant/assertly v0.4.8/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49uaYMPRU=
 github.com/viant/toolbox v0.24.0/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
-github.com/wabarc/ipfs-pinner v0.0.0-20200718165749-b29ba837945f h1:t2QPqjJDk6kCrL9tPT8oBbnsrsrcT0k+Ee3DlNxcO8k=
-github.com/wabarc/ipfs-pinner v0.0.0-20200718165749-b29ba837945f/go.mod h1:WyDstbGhYaCIoA0fes9QaTD42XicANFl0UDvnevdgTY=
+github.com/wabarc/ipfs-pinner v0.0.0-20200810132528-dc1681a32bd6 h1:grDWZCksq5Na+L+fUSz6lwQuLFI+mf44AoZFn9ahrXY=
+github.com/wabarc/ipfs-pinner v0.0.0-20200810132528-dc1681a32bd6/go.mod h1:WyDstbGhYaCIoA0fes9QaTD42XicANFl0UDvnevdgTY=
 github.com/wabarc/obelisk v0.0.0-20200703142927-b75ec5557781 h1:1F8x878em6V4kheBFnLpyt1FvLQ/9J4YBQSwzo4jj9c=
 github.com/wabarc/obelisk v0.0.0-20200703142927-b75ec5557781/go.mod h1:hUOSLtkWv8O5PKgn4SmFKlfOcJLLsDQyVtJRmHS7Zzs=
 github.com/wangjia184/sortedset v0.0.0-20160527075905-f5d03557ba30/go.mod h1:YkocrP2K2tcw938x9gCOmT5G5eCD6jsTz0SZuyAqwIE=

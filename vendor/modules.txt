@@ -533,7 +533,7 @@ github.com/syndtr/goleveldb/leveldb/util
 github.com/tdewolff/parse/v2
 github.com/tdewolff/parse/v2/buffer
 github.com/tdewolff/parse/v2/css
-# github.com/wabarc/ipfs-pinner v0.0.0-20200718165749-b29ba837945f
+# github.com/wabarc/ipfs-pinner v0.0.0-20200810132528-dc1681a32bd6
 ## explicit
 github.com/wabarc/ipfs-pinner/pkg/infura
 # github.com/whyrusleeping/base32 v0.0.0-20170828182744-c30ac30633cc

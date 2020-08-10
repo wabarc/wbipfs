@@ -13,7 +13,7 @@ require (
 	github.com/libp2p/go-libp2p-core v0.5.7
 	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/multiformats/go-multiaddr v0.2.2
-	github.com/wabarc/ipfs-pinner v0.0.0-20200718165749-b29ba837945f
+	github.com/wabarc/ipfs-pinner v0.0.0-20200810132528-dc1681a32bd6
 )
 
 replace github.com/go-shiori/obelisk => github.com/wabarc/obelisk v0.0.0-20200703142927-b75ec5557781
