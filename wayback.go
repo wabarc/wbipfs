@@ -52,8 +52,8 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 		}
 	}
 
-	if wbrc.IPFSMode != "embed" {
-		wbrc.IPFSMode = "daemon"
+	if wbrc.IPFSMode == "" {
+		wbrc.IPFSMode = "pinner"
 	}
 
 	wg := sync.WaitGroup{}
@@ -101,7 +101,7 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 				worklist[link] = dest
 			case "pinner":
 				if cid, err := Pinner(filepath); err != nil {
-					log.Printf("Transfer failed, path: %s, err: %s", filepath, err)
+					log.Printf("Pin failed, path: %s, err: %s", filepath, err)
 					worklist[link] = "Archive failed."
 					return
 				} else {

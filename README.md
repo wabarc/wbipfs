@@ -21,7 +21,7 @@ Usage of wbipfs:
   -host string
         IPFS host (default "127.0.0.1")
   -mode string
-        IPFS running mode supports daemon and embed, daemon requires to run an ipfs standalone daemon, embed now is experimental (default "daemon")
+        IPFS running mode supports daemon, embed and pinner, daemon requires to run an ipfs standalone daemon, embed now is experimental (default "pinner")
   -port uint
         IPFS port (default 5001)
   -tor
