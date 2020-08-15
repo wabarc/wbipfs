@@ -536,6 +536,7 @@ github.com/tdewolff/parse/v2/css
 # github.com/wabarc/ipfs-pinner v0.0.0-20200810132528-dc1681a32bd6
 ## explicit
 github.com/wabarc/ipfs-pinner/pkg/infura
+github.com/wabarc/ipfs-pinner/pkg/pinata
 # github.com/whyrusleeping/base32 v0.0.0-20170828182744-c30ac30633cc
 github.com/whyrusleeping/base32
 # github.com/whyrusleeping/cbor-gen v0.0.0-20200123233031-1cdf64d27158

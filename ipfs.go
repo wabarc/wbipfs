@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	// "log"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -28,6 +28,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 
 	"github.com/wabarc/ipfs-pinner/pkg/infura"
+	"github.com/wabarc/ipfs-pinner/pkg/pinata"
 )
 
 func setupPlugins(externalPluginsPath string) error {
@@ -282,11 +283,33 @@ func (dm *Daemon) Transfer(source string) (string, error) {
 	return cid, nil
 }
 
+// Pinner is the handle of put the file to IPFS by pinning service.
+// It supports two slots which infura and pinata, you can apply a specific slot via WAYBACK_SLOT env.
+// If you use the pinata slot, it requires WAYBACK_APIKEY and WAYBACK_SECRET environment variable.
 func Pinner(source string) (string, error) {
-	if cid, err := infura.PinFile(source); err != nil {
+	var err error
+	var cid string
+	var slot string = os.Getenv("WAYBACK_SLOT")
+
+	switch slot {
+	default:
+	case "infura":
+		cid, err = infura.PinFile(source)
+	case "pinata":
+		apikey := os.Getenv("WAYBACK_APIKEY")
+		secret := os.Getenv("WAYBACK_SECRET")
+		if apikey == "" || secret == "" {
+			log.Println("Please set WAYBACK_APIKEY or WAYBACK_SECRET env.")
+			err = fmt.Errorf("Missing WAYBACK_APIKEY or WAYBACK_SECRET env.")
+			break
+		}
+		pnt := &pinata.Pinata{Apikey: apikey, Secret: secret}
+		cid, err = pnt.PinFile(source)
+	}
+
+	if err != nil {
 		return "", err
 	} else {
 		return cid, nil
 	}
-
 }
