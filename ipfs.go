@@ -293,6 +293,7 @@ func Pinner(source string) (string, error) {
 
 	switch slot {
 	default:
+		cid, err = infura.PinFile(source)
 	case "infura":
 		cid, err = infura.PinFile(source)
 	case "pinata":
