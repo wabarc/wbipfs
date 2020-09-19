@@ -16,7 +16,7 @@ func TestWayback(t *testing.T) {
 	wbrc := &Archiver{
 		Timeout:  30 * time.Second,
 		IPFSHost: "localhost",
-		IPFSPort: 25001,
+		IPFSPort: 5001,
 		// UseTor:   true,
 	}
 	got, _ = wbrc.Wayback(links)
@@ -67,7 +67,7 @@ func TestTransfer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tr := NewDaemon("localhost", 25001)
+	tr := NewDaemon("localhost", 5001)
 	cid, err := tr.Transfer(tmpfile.Name())
 	if err != nil {
 		t.Error(err)
