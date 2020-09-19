@@ -17,3 +17,7 @@ require (
 )
 
 replace github.com/go-shiori/obelisk => github.com/wabarc/obelisk v0.0.0-20200703142927-b75ec5557781
+
+replace github.com/lucas-clemente/quic-go => github.com/lucas-clemente/quic-go v0.18.0
+
+replace github.com/libp2p/go-libp2p-quic-transport => github.com/libp2p/go-libp2p-quic-transport v0.8.0
