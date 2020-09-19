@@ -2,7 +2,6 @@ package wbipfs
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
 	"time"
