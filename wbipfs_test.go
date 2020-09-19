@@ -35,26 +35,6 @@ func TestWayback(t *testing.T) {
 	}
 }
 
-func TestPublish(t *testing.T) {
-	content := []byte("Hello, IPFS!")
-	tmpfile, err := ioutil.TempFile("", "wbipfs-testing")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.Remove(tmpfile.Name())
-
-	if _, err := tmpfile.Write(content); err != nil {
-		log.Fatal(err)
-	}
-
-	// Test publish file to IPFS
-	Publish(tmpfile.Name())
-
-	if err := tmpfile.Close(); err != nil {
-		log.Fatal(err)
-	}
-}
-
 func TestTransfer(t *testing.T) {
 	content := []byte("Hello, IPFS!")
 	tmpfile, err := ioutil.TempFile("", "wbipfs-testing")

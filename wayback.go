@@ -25,7 +25,7 @@ type Archiver struct {
 
 	IPFSHost string
 	IPFSPort uint
-	IPFSMode string // daemon, embed and pinner, default: pinner
+	IPFSMode string // daemon and pinner, default: pinner
 }
 
 // Wayback is the handle of saving to IPFS.
@@ -93,15 +93,6 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 				cid, err := worker.Transfer(filepath)
 				if err != nil {
 					log.Printf("Transfer failed, path: %s, err: %s", filepath, err)
-					worklist[link] = "Archive failed."
-					return
-				}
-				dest := "https://ipfs.io/ipfs/" + cid
-				worklist[link] = dest
-			case "embed":
-				cid, err := Publish(filepath)
-				if err != nil {
-					log.Printf("Publish failed, path: %s, err: %s", filepath, err)
 					worklist[link] = "Archive failed."
 					return
 				}

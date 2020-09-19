@@ -5,7 +5,7 @@ This package is a command-line tool named `wbipfs` saving webpage to IPFS. It al
 ## Installation
 
 ```sh
-$ go get -u -v github.com/wabarc/wbipfs/...
+$ go get -u -v github.com/wabarc/wbipfs/cmd/wbipfs
 ```
 
 ## Usage
@@ -14,14 +14,14 @@ $ go get -u -v github.com/wabarc/wbipfs/...
 
 ```sh
 $ wbipfs --help
-version: 0.0.1
-date: unknown
+version: 0.1.0
+date: 2020/09/19
 
 Usage of wbipfs:
   -host string
         IPFS host (default "127.0.0.1")
   -mode string
-        IPFS running mode supports daemon, embed and pinner, daemon requires to run an ipfs standalone daemon, embed now is experimental (default "pinner")
+        IPFS running mode supports daemon and pinner, daemon requires to run an ipfs standalone daemon. (default "pinner")
   -port uint
         IPFS port (default 5001)
   -tor
@@ -32,8 +32,8 @@ Usage of wbipfs:
 $ wbipfs https://www.google.com https://www.bbc.com
 
 Output:
-version: 0.0.1
-date: unknown
+version: 0.1.0
+date: 2020/09/19
 
 https://www.google.com => https://ipfs.io/ipfs/QmSGvyuAGiwQHTeAzYEhfhhZbhvyCN6PX1kCq3vgwmkPmU
 https://www.bbc.com => https://ipfs.io/ipfs/QmXvUs1ic7uPtfxn7iQHfbefzcrrmnSYP8YDE4BU6jEUab

@@ -11,7 +11,7 @@ import (
 func main() {
 	host := flag.String("host", "127.0.0.1", "IPFS host")
 	port := flag.Uint("port", 5001, "IPFS port")
-	mode := flag.String("mode", "pinner", "IPFS running mode supports daemon, embed and pinner, daemon requires to run an ipfs standalone daemon, embed now is experimental")
+	mode := flag.String("mode", "pinner", "IPFS running mode supports daemon pinner, daemon requires to run an ipfs standalone daemon")
 	tor := flag.Bool("tor", false, "Wayback webpage with Tor proxy, it requires tor executable")
 
 	flag.Parse()
