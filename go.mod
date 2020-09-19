@@ -1,6 +1,6 @@
 module github.com/wabarc/wbipfs
 
-go 1.14
+go 1.15
 
 require (
 	github.com/cretz/bine v0.1.0
