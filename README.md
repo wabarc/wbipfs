@@ -71,5 +71,5 @@ func main() {
 
 ## License
 
-Permissive GPL 3.0 license, see the [LICENSE](https://github.com/wabarc/wbipfs/blob/master/LICENSE) file for details.
+This software is released under the terms of the GNU General Public License v3.0, see the [LICENSE](https://github.com/wabarc/wbipfs/blob/main/LICENSE) file for details.
 
