@@ -9,4 +9,4 @@ require (
 	github.com/wabarc/ipfs-pinner v1.0.1
 )
 
-replace github.com/go-shiori/obelisk => github.com/wabarc/obelisk v0.0.0-20200703142927-b75ec5557781
+replace github.com/go-shiori/obelisk => github.com/wabarc/obelisk v0.0.0-20200821095614-bffd0d7f6be7
