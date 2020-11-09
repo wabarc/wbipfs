@@ -53,6 +53,7 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 	wg := sync.WaitGroup{}
 	worker := NewDaemon(wbrc.IPFSHost, wbrc.IPFSPort)
 	for idx, link := range links {
+		idx, link := idx, link
 		if err := isURL(link); err != nil {
 			worklist[link] = fmt.Sprint(err)
 			continue
