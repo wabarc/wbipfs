@@ -64,6 +64,19 @@ func main() {
 // https://www.bbc.com => https://ipfs.io/ipfs/QmUXFPSJEXcXaZB9WthxbkmYWvUw1JCiNYGWDAAr7jd88p
 ```
 
+## FAQ
+
+#### Optional to disable JavaScript for some URI?
+
+If you prefer to disable JavaScript on saving webpage, you could add environmental variables `DISABLEJS_URIS`
+and set the values with the following formats:
+
+```sh
+export DISABLEJS_URIS=wikipedia.org|eff.org/tags
+```
+
+It will disable JavaScript for domain of the `wikipedia.org` and path of the `eff.org/tags` if matching it.
+
 ## Credits
 
 - [IPFS](https://ipfs.io/)

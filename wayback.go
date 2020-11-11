@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -67,6 +69,9 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 			arc := &obelisk.Archiver{
 				EnableLog:   false,
 				DialContext: wbrc.context,
+				DisableJS:   disableJS(link),
+
+				SkipResourceURLError: true,
 			}
 			arc.Validate()
 
@@ -156,4 +161,17 @@ func (wbrc *Archiver) dial() (error, *tor.Tor) {
 	wbrc.context = dialer.DialContext
 
 	return nil, t
+}
+
+func disableJS(link string) bool {
+	// e.g. DISABLEJS_URIS=wikipedia.org|eff.org/tags
+	uris := os.Getenv("DISABLEJS_URIS")
+	if uris == "" {
+		return false
+	}
+
+	regex := regexp.QuoteMeta(strings.ReplaceAll(uris, "|", "@@"))
+	re := regexp.MustCompile(`(?m)` + strings.ReplaceAll(regex, "@@", "|"))
+
+	return re.MatchString(link)
 }
