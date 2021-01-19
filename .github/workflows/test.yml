@@ -29,7 +29,7 @@ jobs:
         go-version: ^1.13
 
     - name: Set up IPFS
-      uses: ibnesayeed/setup-ipfs@0.6.0
+      uses: ibnesayeed/setup-ipfs@master
       id: ipfs
       with:
         run_daemon: true
