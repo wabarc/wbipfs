@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"mime"
 	"net"
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -54,8 +56,8 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 
 	wg := sync.WaitGroup{}
 	worker := NewDaemon(wbrc.IPFSHost, wbrc.IPFSPort)
-	for idx, link := range links {
-		idx, link := idx, link
+	for _, link := range links {
+		link := link
 		if err := isURL(link); err != nil {
 			worklist[link] = fmt.Sprint(err)
 			continue
@@ -75,14 +77,14 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 			}
 			arc.Validate()
 
-			content, _, err := arc.Archive(context.Background(), req)
+			content, contentType, err := arc.Archive(context.Background(), req)
 			if err != nil {
 				log.Printf("Archive failed: %s", err)
 				worklist[link] = "Archive failed."
 				return
 			}
 
-			filepath := filepath.Join(dir, fmt.Sprintf("page-%d.html", idx))
+			filepath := filepath.Join(dir, fileName(link, contentType))
 			if err := ioutil.WriteFile(filepath, content, 0666); err != nil {
 				log.Printf("Write failed, path: %s, err: %s", filepath, err)
 				worklist[link] = "Archive failed."
@@ -102,7 +104,7 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 					worklist[link] = "Archive failed."
 					return
 				}
-				dest := "https://ipfs.io/ipfs/" + cid
+				dest := fmt.Sprintf("https://ipfs.io/ipfs/%s#%s", cid, link)
 				worklist[link] = dest
 			case "pinner":
 				if cid, err := Pinner(filepath); err != nil {
@@ -110,7 +112,7 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 					worklist[link] = "Archive failed."
 					return
 				} else {
-					dest := "https://ipfs.io/ipfs/" + cid
+					dest := fmt.Sprintf("https://ipfs.io/ipfs/%s", cid)
 					worklist[link] = dest
 				}
 			}
@@ -174,4 +176,29 @@ func disableJS(link string) bool {
 	re := regexp.MustCompile(`(?m)` + strings.ReplaceAll(regex, "@@", "|"))
 
 	return re.MatchString(link)
+}
+
+func fileName(link, contentType string) string {
+	now := time.Now().Format("2006-01-02-150405")
+	ext := "html"
+	if exts, _ := mime.ExtensionsByType(contentType); len(exts) > 0 {
+		ext = exts[0]
+	}
+
+	u, err := url.ParseRequestURI(link)
+	if err != nil || u.Scheme == "" || u.Hostname() == "" {
+		return now + ext
+	}
+
+	domain := strings.ReplaceAll(u.Hostname(), ".", "-")
+	if u.Path == "" || u.Path == "/" {
+		return fmt.Sprintf("%s-%s%s", now, domain, ext)
+	}
+
+	baseName := path.Base(u.Path)
+	if parts := strings.Split(baseName, "-"); len(parts) > 4 {
+		baseName = strings.Join(parts[:4], "-")
+	}
+
+	return fmt.Sprintf("%s-%s-%s%s", now, domain, baseName, ext)
 }
