@@ -54,7 +54,8 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 		wbrc.IPFSMode = "pinner"
 	}
 
-	wg := sync.WaitGroup{}
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 	worker := NewDaemon(wbrc.IPFSHost, wbrc.IPFSPort)
 	for _, link := range links {
 		link := link
@@ -77,17 +78,18 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 			}
 			arc.Validate()
 
+			dest := "Archive failed."
 			content, contentType, err := arc.Archive(context.Background(), req)
 			if err != nil {
 				log.Printf("Archive failed: %s", err)
-				worklist[link] = "Archive failed."
+				worklist[link] = dest
 				return
 			}
 
 			filepath := filepath.Join(dir, fileName(link, contentType))
 			if err := ioutil.WriteFile(filepath, content, 0666); err != nil {
 				log.Printf("Write failed, path: %s, err: %s", filepath, err)
-				worklist[link] = "Archive failed."
+				worklist[link] = dest
 				return
 			}
 
@@ -101,21 +103,20 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 				cid, err := worker.Transfer(filepath)
 				if err != nil {
 					log.Printf("Transfer failed, path: %s, err: %s", filepath, err)
-					worklist[link] = "Archive failed."
-					return
+					break
 				}
-				dest := fmt.Sprintf("https://ipfs.io/ipfs/%s#%s", cid, link)
-				worklist[link] = dest
+				dest = fmt.Sprintf("https://ipfs.io/ipfs/%s#%s", cid, link)
 			case "pinner":
 				if cid, err := Pinner(filepath); err != nil {
 					log.Printf("Pin failed, path: %s, err: %s", filepath, err)
-					worklist[link] = "Archive failed."
-					return
+					break
 				} else {
-					dest := fmt.Sprintf("https://ipfs.io/ipfs/%s", cid)
-					worklist[link] = dest
+					dest = fmt.Sprintf("https://ipfs.io/ipfs/%s", cid)
 				}
 			}
+			mu.Lock()
+			worklist[link] = dest
+			mu.Unlock()
 		}(link)
 	}
 	wg.Wait()
