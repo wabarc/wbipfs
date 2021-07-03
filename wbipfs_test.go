@@ -1,36 +1,30 @@
 package wbipfs
 
 import (
+	"context"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"testing"
 	"time"
 )
 
 func TestWayback(t *testing.T) {
-	var (
-		links []string
-		got   map[string]string
-	)
+	link := "https://example.com/"
 	wbrc := &Archiver{
 		Timeout:  30 * time.Second,
 		IPFSHost: "localhost",
 		IPFSPort: 5001,
 		// UseTor:   true,
 	}
-	got, _ = wbrc.Wayback(links)
-	if len(got) != 0 {
-		t.Errorf("got = %d; want 0", len(got))
+	input, err := url.Parse(link)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	links = []string{"https://example.org/", "https://example.com/"}
-	got, _ = wbrc.Wayback(links)
-	if len(got) == 0 {
-		t.Errorf("got = %d; want not equal 0", len(got))
-	}
-
-	for orig, dest := range got {
-		t.Log(orig, "=>", dest)
+	_, err = wbrc.Wayback(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

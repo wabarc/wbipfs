@@ -14,11 +14,11 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/cretz/bine/tor"
 	"github.com/go-shiori/obelisk"
+	"github.com/wabarc/logger"
 )
 
 // Archiver is core of the wbipfs.
@@ -33,19 +33,19 @@ type Archiver struct {
 }
 
 // Wayback is the handle of saving to IPFS.
-func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
-	var worklist = make(map[string]string)
-
+func (wbrc *Archiver) Wayback(ctx context.Context, input *url.URL) (dst string, err error) {
 	// Write content to tmp file
 	dir, err := ioutil.TempDir(os.TempDir(), "wbipfs-")
 	if err != nil {
-		return worklist, fmt.Errorf("Create temp directory failed: %w", err)
+		logger.Error("[wbipfs] create temporary directory failed: %v", err)
+		return dst, fmt.Errorf("Create temp directory failed: %v", err)
 	}
 	defer os.RemoveAll(dir)
 
 	if wbrc.UseTor {
 		if err, tor := wbrc.dial(); err != nil {
-			return worklist, fmt.Errorf("Dial tor failed: %w", err)
+			logger.Error("[wbipfs] dial tor failed: %v", err)
+			return dst, fmt.Errorf("Dial tor failed: %w", err)
 		} else {
 			defer tor.Close()
 		}
@@ -54,87 +54,54 @@ func (wbrc *Archiver) Wayback(links []string) (map[string]string, error) {
 		wbrc.IPFSMode = "pinner"
 	}
 
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	worker := NewDaemon(wbrc.IPFSHost, wbrc.IPFSPort)
-	for _, link := range links {
-		link := link
-		if err := isURL(link); err != nil {
-			worklist[link] = fmt.Sprint(err)
-			continue
+	uri := input.String()
+	req := obelisk.Request{URL: uri}
+	arc := &obelisk.Archiver{
+		EnableLog:   false,
+		DialContext: wbrc.context,
+		DisableJS:   disableJS(uri),
+
+		SkipResourceURLError: true,
+	}
+	arc.Validate()
+
+	dst = "Archive failed."
+	content, contentType, err := arc.Archive(context.Background(), req)
+	if err != nil {
+		log.Printf("Archive failed: %s", err)
+		return dst, err
+	}
+
+	filepath := filepath.Join(dir, fileName(uri, contentType))
+	if err := ioutil.WriteFile(filepath, content, 0666); err != nil {
+		logger.Error("Write failed, path: %s, err: %s", filepath, err)
+		return dst, err
+	}
+
+	switch wbrc.IPFSMode {
+	case "daemon":
+		// Valid IPFS daemon connection
+		if wbrc.IPFSHost == "" || wbrc.IPFSPort == 0 || wbrc.IPFSPort > 65535 {
+			logger.Error("IPFS hostname or port is invalid, host: %s, port: %d", wbrc.IPFSHost, wbrc.IPFSPort)
+			return dst, fmt.Errorf("IPFS hostname or port is invalid")
 		}
-		wg.Add(1)
-
-		go func(link string) {
-			defer wg.Done()
-
-			req := obelisk.Request{URL: link}
-			arc := &obelisk.Archiver{
-				EnableLog:   false,
-				DialContext: wbrc.context,
-				DisableJS:   disableJS(link),
-
-				SkipResourceURLError: true,
-			}
-			arc.Validate()
-
-			dest := "Archive failed."
-			content, contentType, err := arc.Archive(context.Background(), req)
-			if err != nil {
-				log.Printf("Archive failed: %s", err)
-				worklist[link] = dest
-				return
-			}
-
-			filepath := filepath.Join(dir, fileName(link, contentType))
-			if err := ioutil.WriteFile(filepath, content, 0666); err != nil {
-				log.Printf("Write failed, path: %s, err: %s", filepath, err)
-				worklist[link] = dest
-				return
-			}
-
-			switch wbrc.IPFSMode {
-			case "daemon":
-				// Valid IPFS daemon connection
-				if wbrc.IPFSHost == "" || wbrc.IPFSPort == 0 || wbrc.IPFSPort > 65535 {
-					log.Printf("IPFS hostname or port is invalid, host: %s, port: %d", wbrc.IPFSHost, wbrc.IPFSPort)
-					return
-				}
-				cid, err := worker.Transfer(filepath)
-				if err != nil {
-					log.Printf("Transfer failed, path: %s, err: %s", filepath, err)
-					break
-				}
-				dest = fmt.Sprintf("https://ipfs.io/ipfs/%s#%s", cid, link)
-			case "pinner":
-				if cid, err := Pinner(filepath); err != nil {
-					log.Printf("Pin failed, path: %s, err: %s", filepath, err)
-					break
-				} else {
-					dest = fmt.Sprintf("https://ipfs.io/ipfs/%s", cid)
-				}
-			}
-			mu.Lock()
-			worklist[link] = dest
-			mu.Unlock()
-		}(link)
-	}
-	wg.Wait()
-
-	return worklist, nil
-}
-
-func isURL(link string) error {
-	if link == "" {
-		return fmt.Errorf("is not specified")
+		worker := NewDaemon(wbrc.IPFSHost, wbrc.IPFSPort)
+		cid, err := worker.Transfer(filepath)
+		if err != nil {
+			logger.Error("Transfer failed, path: %s, err: %s", filepath, err)
+			break
+		}
+		dst = fmt.Sprintf("https://ipfs.io/ipfs/%s#%s", cid, uri)
+	case "pinner":
+		if cid, err := Pinner(filepath); err != nil {
+			logger.Error("Pin failed, path: %s, err: %s", filepath, err)
+			break
+		} else {
+			dst = fmt.Sprintf("https://ipfs.io/ipfs/%s", cid)
+		}
 	}
 
-	u, err := url.ParseRequestURI(link)
-	if err != nil || u.Scheme == "" || u.Hostname() == "" {
-		return fmt.Errorf("is not valid")
-	}
-
-	return nil
+	return dst, nil
 }
 
 func (wbrc *Archiver) dial() (error, *tor.Tor) {
@@ -144,7 +111,7 @@ func (wbrc *Archiver) dial() (error, *tor.Tor) {
 	}
 
 	// Start tor with default config
-	t, err := tor.Start(nil, nil)
+	t, err := tor.Start(context.TODO(), nil)
 	if err != nil {
 		return fmt.Errorf("Make connection failed: %w", err), nil
 	}

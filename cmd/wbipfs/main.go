@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
+	"sync"
 
 	"github.com/wabarc/wbipfs"
 )
@@ -32,8 +35,24 @@ func main() {
 		UseTor:   *tor,
 	}
 
-	links, _ := wbrc.Wayback(args)
-	for orig, dest := range links {
-		fmt.Println(orig, "=>", dest)
+	var wg sync.WaitGroup
+	for _, arg := range args {
+		wg.Add(1)
+		go func(link string) {
+			defer wg.Done()
+			input, err := url.Parse(link)
+			if err != nil {
+				fmt.Println(link, "=>", fmt.Sprintf("%v", err))
+				return
+			}
+
+			dst, err := wbrc.Wayback(context.Background(), input)
+			if err != nil {
+				fmt.Println(link, "=>", fmt.Sprintf("%v", err))
+				return
+			}
+			fmt.Println(link, "=>", dst)
+		}(arg)
 	}
+	wg.Wait()
 }
