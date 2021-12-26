@@ -1,8 +1,10 @@
 package wbipfs
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"mime"
@@ -55,7 +57,7 @@ func (wbrc *Archiver) Wayback(ctx context.Context, input *url.URL) (dst string, 
 	}
 
 	uri := input.String()
-	req := obelisk.Request{URL: uri}
+	req := obelisk.Request{URL: uri, Input: inputFromContext(ctx)}
 	arc := &obelisk.Archiver{
 		EnableLog:   false,
 		DialContext: wbrc.context,
@@ -102,6 +104,20 @@ func (wbrc *Archiver) Wayback(ctx context.Context, input *url.URL) (dst string, 
 	}
 
 	return dst, nil
+}
+
+type ctxKeyInput struct{}
+
+// ContextWithInput permits to inject a webpage into a context by given input.
+func (wbrc *Archiver) ContextWithInput(ctx context.Context, input []byte) (c context.Context) {
+	return context.WithValue(ctx, ctxKeyInput{}, input)
+}
+
+func inputFromContext(ctx context.Context) io.Reader {
+	if b, ok := ctx.Value(ctxKeyInput{}).([]byte); ok {
+		return bytes.NewReader(b)
+	}
+	return nil
 }
 
 func (wbrc *Archiver) dial() (error, *tor.Tor) {
