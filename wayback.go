@@ -20,14 +20,14 @@ import (
 
 	"github.com/cretz/bine/tor"
 	"github.com/go-shiori/obelisk"
-	"github.com/wabarc/logger"
+	"github.com/pkg/errors"
 )
 
 // Archiver is core of the wbipfs.
 type Archiver struct {
-	UseTor  bool
-	Timeout time.Duration
-	context func(ctx context.Context, network, addr string) (net.Conn, error)
+	UseTor      bool
+	Timeout     time.Duration
+	DialContext func(ctx context.Context, network, addr string) (net.Conn, error)
 
 	IPFSHost string
 	IPFSPort uint
@@ -39,15 +39,13 @@ func (wbrc *Archiver) Wayback(ctx context.Context, input *url.URL) (dst string, 
 	// Write content to tmp file
 	dir, err := ioutil.TempDir(os.TempDir(), "wbipfs-")
 	if err != nil {
-		logger.Error("[wbipfs] create temporary directory failed: %v", err)
-		return dst, fmt.Errorf("Create temp directory failed: %v", err)
+		return dst, errors.Wrap(err, "create temp directory failed")
 	}
 	defer os.RemoveAll(dir)
 
 	if wbrc.UseTor {
-		if err, tor := wbrc.dial(); err != nil {
-			logger.Error("[wbipfs] dial tor failed: %v", err)
-			return dst, fmt.Errorf("Dial tor failed: %w", err)
+		if err, tor := wbrc.dial(ctx); err != nil {
+			return dst, errors.Wrap(err, "dial tor failed")
 		} else {
 			defer tor.Close()
 		}
@@ -60,7 +58,7 @@ func (wbrc *Archiver) Wayback(ctx context.Context, input *url.URL) (dst string, 
 	req := obelisk.Request{URL: uri, Input: inputFromContext(ctx)}
 	arc := &obelisk.Archiver{
 		EnableLog:   false,
-		DialContext: wbrc.context,
+		DialContext: wbrc.DialContext,
 		DisableJS:   disableJS(uri),
 
 		SkipResourceURLError: true,
@@ -68,7 +66,7 @@ func (wbrc *Archiver) Wayback(ctx context.Context, input *url.URL) (dst string, 
 	arc.Validate()
 
 	dst = "Archive failed."
-	content, contentType, err := arc.Archive(context.Background(), req)
+	content, contentType, err := arc.Archive(ctx, req)
 	if err != nil {
 		log.Printf("Archive failed: %s", err)
 		return dst, err
@@ -76,27 +74,25 @@ func (wbrc *Archiver) Wayback(ctx context.Context, input *url.URL) (dst string, 
 
 	filepath := filepath.Join(dir, fileName(uri, contentType))
 	if err := ioutil.WriteFile(filepath, content, 0666); err != nil {
-		logger.Error("Write failed, path: %s, err: %s", filepath, err)
-		return dst, err
+		return dst, errors.Wrapf(err, "write failed, path: %s", filepath)
 	}
 
 	switch wbrc.IPFSMode {
 	case "daemon":
 		// Valid IPFS daemon connection
 		if wbrc.IPFSHost == "" || wbrc.IPFSPort == 0 || wbrc.IPFSPort > 65535 {
-			logger.Error("IPFS hostname or port is invalid, host: %s, port: %d", wbrc.IPFSHost, wbrc.IPFSPort)
-			return dst, fmt.Errorf("IPFS hostname or port is invalid")
+			return dst, errors.Errorf("IPFS hostname or port is invalid, host: %s, port: %d", wbrc.IPFSHost, wbrc.IPFSPort)
 		}
 		worker := NewDaemon(wbrc.IPFSHost, wbrc.IPFSPort)
 		cid, err := worker.Transfer(filepath)
 		if err != nil {
-			logger.Error("Transfer failed, path: %s, err: %s", filepath, err)
+			err = errors.Wrapf(err, "transfer failed, path: %s", filepath)
 			break
 		}
 		dst = fmt.Sprintf("https://ipfs.io/ipfs/%s#%s", cid, uri)
 	case "pinner":
 		if cid, err := Pinner(filepath); err != nil {
-			logger.Error("Pin failed, path: %s, err: %s", filepath, err)
+			err = errors.Wrapf(err, "pin failed, path: %s", filepath)
 			break
 		} else {
 			dst = fmt.Sprintf("https://ipfs.io/ipfs/%s", cid)
@@ -120,31 +116,31 @@ func inputFromContext(ctx context.Context) io.Reader {
 	return nil
 }
 
-func (wbrc *Archiver) dial() (error, *tor.Tor) {
+func (wbrc *Archiver) dial(ctx context.Context) (error, *tor.Tor) {
 	// Lookup tor executable file
 	if _, err := exec.LookPath("tor"); err != nil {
-		return fmt.Errorf("%w", err), nil
+		return err, nil
 	}
 
 	// Start tor with default config
-	t, err := tor.Start(context.TODO(), nil)
+	t, err := tor.Start(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("Make connection failed: %w", err), nil
+		return errors.Wrap(err, "starts tor failed"), nil
 	}
 	// defer t.Close()
 
 	// Wait at most a minute to start network and get
-	dialCtx, dialCancel := context.WithTimeout(context.Background(), time.Minute)
+	dialCtx, dialCancel := context.WithTimeout(ctx, time.Minute)
 	defer dialCancel()
 
 	// Make connection
 	dialer, err := t.Dialer(dialCtx, nil)
 	if err != nil {
 		t.Close()
-		return fmt.Errorf("Make connection failed: %w", err), nil
+		return errors.Wrap(err, "dial tor failed"), nil
 	}
 
-	wbrc.context = dialer.DialContext
+	wbrc.DialContext = dialer.DialContext
 
 	return nil, t
 }
