@@ -1,5 +1,7 @@
 # A Golang and Command-Line Interface to IPFS
 
+**This package has been migrated to [rivet](https://github.com/wabarc/rivet).**
+
 This package is a command-line tool named `wbipfs` saving webpage to IPFS. It also supports imports as a Golang package for a programmatic. Please report all bugs and issues on [Github](https://github.com/wabarc/wbipfs/issues).
 
 ## Installation
